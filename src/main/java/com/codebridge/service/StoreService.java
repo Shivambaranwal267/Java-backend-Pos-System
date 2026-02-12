@@ -1,5 +1,6 @@
 package com.codebridge.service;
 
+import com.codebridge.domain.StoreStatus;
 import com.codebridge.exception.UserException;
 import com.codebridge.model.Store;
 import com.codebridge.model.User;
@@ -19,8 +20,10 @@ public interface StoreService {
 
     StoreDTO updateStore(Long id, StoreDTO storeDTO) throws Exception;
 
-    StoreDTO deleteStore(Long id);
+    void deleteStore(Long id) throws Exception;
 
     StoreDTO getStoreByEmployee() throws UserException;
+
+    StoreDTO moderateStore(long id, StoreStatus status) throws Exception;
 
 }

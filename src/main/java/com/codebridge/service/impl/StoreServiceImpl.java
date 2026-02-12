@@ -1,5 +1,6 @@
 package com.codebridge.service.impl;
 
+import com.codebridge.domain.StoreStatus;
 import com.codebridge.exception.UserException;
 import com.codebridge.mapper.StoreMapper;
 import com.codebridge.model.Store;
@@ -58,29 +59,55 @@ public class StoreServiceImpl implements StoreService {
         User currentUser = userService.getCurrentUser();
         Store existing = storeRepository.findByStoreAdminId(currentUser.getId());
 
-        if(existing == null) {
+        if (existing == null) {
             throw new Exception("store not found");
         }
 
         existing.setBrand(storeDTO.getBrand());
         existing.setDescription(storeDTO.getDescription());
 
-        if(storeDTO.getStoreType() != null) {
+        if (storeDTO.getStoreType() != null) {
             existing.setStoreType(storeDTO.getStoreType());
         }
 
-        if(storeDTO.getContact()!=null){
-            StoreContact contact = StoreContact.
+        if (storeDTO.getContact() != null) {
+            StoreContact contact = StoreContact.builder()
+                    .address(storeDTO.getContact().getAddress())
+                    .phone(storeDTO.getContact().getPhone())
+                    .email(storeDTO.getContact().getEmail())
+                    .build();
+
+            existing.setContact(contact);
         }
 
-        return null;
+        Store updatedStore = storeRepository.save(existing);
+        return StoreMapper.toDTO(updatedStore);
+
     }
+
+//    @Override
+//    public void deleteStore(Long id) throws UserException {
+//
+//        Store store = getStoreByAdmin();
+//
+//        storeRepository.delete(store);
+//    }
 
     @Override
-    public StoreDTO deleteStore(Long id) {
+    public void deleteStore(Long id) throws Exception {
 
-        return null;
+        User currentUser = userService.getCurrentUser();
+
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new Exception("Store not found"));
+
+        if (!store.getStoreAdmin().getId().equals(currentUser.getId())) {
+            throw new Exception("You are not allowed to delete this store");
+        }
+
+        storeRepository.delete(store);
     }
+
 
     @Override
     public StoreDTO getStoreByEmployee() throws UserException {
@@ -91,5 +118,17 @@ public class StoreServiceImpl implements StoreService {
             throw new UserException("you don't have permission to access this store");
         }
         return StoreMapper.toDTO(currentUser.getStore());
+    }
+
+    @Override
+    public StoreDTO moderateStore(long id, StoreStatus status) throws Exception {
+
+        Store store = storeRepository.findById(id).orElseThrow(
+                () -> new Exception("store not found...")
+        );
+
+        store.setStatus(status);
+        Store updatedStore = storeRepository.save(store);
+        return StoreMapper.toDTO(updatedStore);
     }
 }
